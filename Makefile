@@ -3,12 +3,22 @@
 # Build configuration
 TARGET = aarch64-unknown-none-softfloat
 MODE = debug
-KERNEL_NAME = rustos
+KERNEL_NAME = kernel
 
 # Directories
 SRC_DIR = src
 BUILD_DIR = target/$(TARGET)/$(MODE)
 KERNEL_BIN = $(BUILD_DIR)/$(KERNEL_NAME)
+
+# Image packaging configuration (always use release artifacts)
+IMAGE_BUILD_DIR = target/$(TARGET)/release
+IMAGE_OUTPUT_DIR = $(IMAGE_BUILD_DIR)/image
+
+# Prefer rust-objcopy; fall back to llvm/aarch64 objcopy alternatives
+OBJCOPY := $(shell command -v rust-objcopy 2>/dev/null || \
+                     command -v llvm-objcopy 2>/dev/null || \
+                     command -v aarch64-none-elf-objcopy 2>/dev/null || \
+                     command -v aarch64-linux-gnu-objcopy 2>/dev/null)
 
 # QEMU configuration
 QEMU = qemu-system-aarch64
@@ -98,11 +108,20 @@ setup:
 
 # Create a bootable image (for real hardware)
 .PHONY: image
-image: release
+
+image:
+	@echo "Building RustOS kernel (release) for image packaging..."
+	cargo build --target $(TARGET) --release --bin $(KERNEL_NAME)
 	@echo "Creating bootable image..."
-	mkdir -p $(BUILD_DIR)/image
-	cp $(BUILD_DIR)/$(KERNEL_NAME) $(BUILD_DIR)/image/kernel8.img
-	@echo "Bootable image created at $(BUILD_DIR)/image/kernel8.img"
+	@if [ -z "$(OBJCOPY)" ]; then \
+		echo "Error: objcopy tool not found. Run 'make setup' to install rust-objcopy or ensure llvm-objcopy is in PATH."; \
+		exit 1; \
+	fi
+	mkdir -p $(IMAGE_OUTPUT_DIR)
+	$(OBJCOPY) --strip-all -O binary $(IMAGE_BUILD_DIR)/$(KERNEL_NAME) $(IMAGE_OUTPUT_DIR)/kernel8.img
+	printf "arm_64bit=1\\nkernel=kernel8.img\\n" > $(IMAGE_OUTPUT_DIR)/config.txt
+	@echo "Bootable image created at $(IMAGE_OUTPUT_DIR)/kernel8.img"
+	@echo "Boot configuration written to $(IMAGE_OUTPUT_DIR)/config.txt"
 
 # Integration with uutils/coreutils
 .PHONY: coreutils

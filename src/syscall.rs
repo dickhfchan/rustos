@@ -166,6 +166,7 @@ fn sys_munmap(addr: u64, length: usize) -> u64 {
 
 // Exception vector table in assembly
 core::arch::global_asm!(r#"
+.globl exception_vector_table
 .align 11
 exception_vector_table:
     // Current EL with SP0
