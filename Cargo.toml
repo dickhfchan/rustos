@@ -1,0 +1,38 @@
+[package]
+name = "rustos"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+spin = "0.9"
+linked_list_allocator = "0.10"
+bitflags = "2.4"
+volatile = "0.4"
+
+[dependencies.lazy_static]
+version = "1.4"
+features = ["spin_no_std"]
+
+[lib]
+crate-type = ["staticlib"]
+
+
+[[bin]]
+name = "kernel"
+path = "src/main.rs"
+
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+
+[target.aarch64-unknown-none-softfloat]
+rustflags = [
+    "-C", "link-arg=-nostartfiles", 
+    "-C", "link-arg=-Tlinker.ld",
+]
+
+[package.metadata.cargo-xbuild]
+memcpy = false

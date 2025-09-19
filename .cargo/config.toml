@@ -1,0 +1,12 @@
+[unstable]
+build-std-features = ["compiler-builtins-mem"]
+build-std = ["core", "compiler_builtins", "alloc"]
+
+[build]
+target = "aarch64-unknown-none-softfloat"
+
+[target.aarch64-unknown-none-softfloat]
+runner = "qemu-system-aarch64 -machine virt -cpu cortex-a72 -smp 4 -m 2G -serial stdio -display none -kernel"
+rustflags = [
+    "-C", "link-arg=-Tlinker.ld",
+]
