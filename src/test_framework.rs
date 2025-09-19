@@ -1,5 +1,3 @@
-use core::panic::PanicInfo;
-use core::fmt::Write;
 use crate::{print, println};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -295,9 +293,13 @@ impl PerformanceTimer {
     pub fn enable_cycle_counter() {
         unsafe {
             // Enable user-mode access to cycle counter
+            let enable_user: u64 = 1;
+            let enable_cycle: u64 = 0x8000_0000;
             core::arch::asm!(
-                "msr pmuserenr_el0, #1",
-                "msr pmcntenset_el0, #0x80000000"
+                "msr pmuserenr_el0, {enable}",
+                "msr pmcntenset_el0, {cycle}",
+                enable = in(reg) enable_user,
+                cycle = in(reg) enable_cycle
             );
         }
     }

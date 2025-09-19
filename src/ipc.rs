@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use alloc::collections::{BTreeMap, VecDeque};
 use alloc::vec::Vec;
 use alloc::vec;
@@ -269,7 +271,7 @@ pub fn close_pipe_write(pipe_id: u32) -> Result<(), &'static str> {
 }
 
 // Shared memory system calls
-pub fn sys_shmget(size: usize, flags: i32) -> u32 {
+pub fn sys_shmget(size: usize, _flags: i32) -> u32 {
     let permissions = SharedMemoryPermissions::READ | SharedMemoryPermissions::WRITE;
     SHMEM_MANAGER.lock().create_segment(size, permissions)
 }

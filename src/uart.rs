@@ -20,6 +20,7 @@ impl Uart {
         }
     }
     
+    #[allow(dead_code)]
     fn read_byte(&self) -> Option<u8> {
         unsafe {
             let status_ptr = (self.base_address + 0x18) as *mut u32;

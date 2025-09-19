@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use alloc::collections::VecDeque;
 use alloc::vec::Vec;
 use spin::Mutex;
@@ -225,7 +227,7 @@ pub fn sys_exec(entry_point: u64) -> Result<(), &'static str> {
     }
 }
 
-pub fn sys_exit(exit_code: i32) -> ! {
+pub fn sys_exit(_exit_code: i32) -> ! {
     if let Ok(_) = terminate_current_process() {
         schedule();
     }

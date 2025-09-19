@@ -14,12 +14,24 @@ version = "1.4"
 features = ["spin_no_std"]
 
 [lib]
-crate-type = ["staticlib"]
+crate-type = ["staticlib", "rlib"]
 
 
 [[bin]]
 name = "kernel"
 path = "src/main.rs"
+
+[[bin]]
+name = "kernel_tests"
+path = "src/bin/kernel_tests.rs"
+
+[[bin]]
+name = "syscall_tests"
+path = "src/bin/syscall_tests.rs"
+
+[[bin]]
+name = "stress_tests"
+path = "src/bin/stress_tests.rs"
 
 
 [profile.dev]
@@ -27,12 +39,6 @@ panic = "abort"
 
 [profile.release]
 panic = "abort"
-
-[target.aarch64-unknown-none-softfloat]
-rustflags = [
-    "-C", "link-arg=-nostartfiles", 
-    "-C", "link-arg=-Tlinker.ld",
-]
 
 [package.metadata.cargo-xbuild]
 memcpy = false

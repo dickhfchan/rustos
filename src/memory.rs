@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use linked_list_allocator::LockedHeap;
 
 #[global_allocator]
@@ -166,7 +168,7 @@ pub fn allocate_pages(size: usize) -> Result<u64, &'static str> {
     }
 }
 
-pub fn deallocate_pages(addr: u64, size: usize) -> Result<(), &'static str> {
+pub fn deallocate_pages(_addr: u64, _size: usize) -> Result<(), &'static str> {
     // Simple deallocation - in a real kernel this would free the pages
     Ok(())
 }

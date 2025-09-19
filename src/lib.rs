@@ -14,6 +14,7 @@ pub mod fs;
 pub mod ipc;
 pub mod userspace;
 pub mod test_framework;
+pub mod panic;
 
 // Re-export macros for tests (commented out to avoid redefinition)
 // pub use crate::{print, println, assert_eq_test, assert_test, assert_ne_test};
@@ -43,6 +44,11 @@ fn test_kernel_main(_boot_info: &'static BootInfo) -> ! {
 #[cfg(test)]
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
-    println!("Test panic: {}", info);
-    loop {}
+    panic::handle(info)
+}
+
+#[cfg(not(test))]
+#[panic_handler]
+fn panic(_info: &core::panic::PanicInfo) -> ! {
+    panic::handle(_info)
 }

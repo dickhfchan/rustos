@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use alloc::vec::Vec;
 use crate::process;
 
@@ -128,84 +130,84 @@ impl CoreUtilsIntegration {
         }
     }
     
-    fn spawn_ls(args: &[&str]) -> Result<u32, &'static str> {
+    fn spawn_ls(_args: &[&str]) -> Result<u32, &'static str> {
         // Create a process that implements ls functionality
         // This would load the uutils ls binary and execute it
         let entry_point = Self::load_coreutil_binary("ls")?;
         process::create_process(entry_point, 65536) // 64KB stack
     }
     
-    fn spawn_cat(args: &[&str]) -> Result<u32, &'static str> {
+    fn spawn_cat(_args: &[&str]) -> Result<u32, &'static str> {
         let entry_point = Self::load_coreutil_binary("cat")?;
         process::create_process(entry_point, 65536)
     }
     
-    fn spawn_echo(args: &[&str]) -> Result<u32, &'static str> {
+    fn spawn_echo(_args: &[&str]) -> Result<u32, &'static str> {
         let entry_point = Self::load_coreutil_binary("echo")?;
         process::create_process(entry_point, 32768) // 32KB stack
     }
     
-    fn spawn_mkdir(args: &[&str]) -> Result<u32, &'static str> {
+    fn spawn_mkdir(_args: &[&str]) -> Result<u32, &'static str> {
         let entry_point = Self::load_coreutil_binary("mkdir")?;
         process::create_process(entry_point, 32768)
     }
     
-    fn spawn_rm(args: &[&str]) -> Result<u32, &'static str> {
+    fn spawn_rm(_args: &[&str]) -> Result<u32, &'static str> {
         let entry_point = Self::load_coreutil_binary("rm")?;
         process::create_process(entry_point, 32768)
     }
     
-    fn spawn_cp(args: &[&str]) -> Result<u32, &'static str> {
+    fn spawn_cp(_args: &[&str]) -> Result<u32, &'static str> {
         let entry_point = Self::load_coreutil_binary("cp")?;
         process::create_process(entry_point, 65536)
     }
     
-    fn spawn_mv(args: &[&str]) -> Result<u32, &'static str> {
+    fn spawn_mv(_args: &[&str]) -> Result<u32, &'static str> {
         let entry_point = Self::load_coreutil_binary("mv")?;
         process::create_process(entry_point, 32768)
     }
     
-    fn spawn_grep(args: &[&str]) -> Result<u32, &'static str> {
+    fn spawn_grep(_args: &[&str]) -> Result<u32, &'static str> {
         let entry_point = Self::load_coreutil_binary("grep")?;
         process::create_process(entry_point, 131072) // 128KB stack for regex processing
     }
     
-    fn spawn_wc(args: &[&str]) -> Result<u32, &'static str> {
+    fn spawn_wc(_args: &[&str]) -> Result<u32, &'static str> {
         let entry_point = Self::load_coreutil_binary("wc")?;
         process::create_process(entry_point, 32768)
     }
     
-    fn spawn_sort(args: &[&str]) -> Result<u32, &'static str> {
+    fn spawn_sort(_args: &[&str]) -> Result<u32, &'static str> {
         let entry_point = Self::load_coreutil_binary("sort")?;
         process::create_process(entry_point, 131072) // 128KB stack for sorting
     }
     
-    fn spawn_head(args: &[&str]) -> Result<u32, &'static str> {
+    fn spawn_head(_args: &[&str]) -> Result<u32, &'static str> {
         let entry_point = Self::load_coreutil_binary("head")?;
         process::create_process(entry_point, 32768)
     }
     
-    fn spawn_tail(args: &[&str]) -> Result<u32, &'static str> {
+    fn spawn_tail(_args: &[&str]) -> Result<u32, &'static str> {
         let entry_point = Self::load_coreutil_binary("tail")?;
         process::create_process(entry_point, 32768)
     }
     
-    fn spawn_cut(args: &[&str]) -> Result<u32, &'static str> {
+    fn spawn_cut(_args: &[&str]) -> Result<u32, &'static str> {
         let entry_point = Self::load_coreutil_binary("cut")?;
         process::create_process(entry_point, 32768)
     }
     
-    fn spawn_tr(args: &[&str]) -> Result<u32, &'static str> {
+    fn spawn_tr(_args: &[&str]) -> Result<u32, &'static str> {
         let entry_point = Self::load_coreutil_binary("tr")?;
         process::create_process(entry_point, 32768)
     }
     
-    fn spawn_sed(args: &[&str]) -> Result<u32, &'static str> {
+    fn spawn_sed(_args: &[&str]) -> Result<u32, &'static str> {
         let entry_point = Self::load_coreutil_binary("sed")?;
         process::create_process(entry_point, 131072) // 128KB stack for regex processing
     }
     
-    fn spawn_awk(args: &[&str]) -> Result<u32, &'static str> {
+    fn spawn_awk(_args: &[&str]) -> Result<u32, &'static str> {
         let entry_point = Self::load_coreutil_binary("awk")?;
         process::create_process(entry_point, 131072) // 128KB stack for script processing
     }
@@ -306,7 +308,7 @@ pub fn sys_execve(path: &str, args: &[&str]) -> Result<(), &'static str> {
     
     // Try to execute as a coreutil
     match CoreUtilsIntegration::spawn_coreutil(program_name, args) {
-        Ok(pid) => {
+        Ok(_pid) => {
             // Replace current process with new process
             // This is simplified - real execve would replace the current process
             Ok(())

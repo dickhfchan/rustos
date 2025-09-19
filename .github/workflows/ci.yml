@@ -64,7 +64,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: kernel-binary
-        path: target/${{ env.TARGET }}/debug/rustos
+        path: target/${{ env.TARGET }}/debug/kernel
         
     - name: Upload test binaries
       uses: actions/upload-artifact@v3
@@ -80,10 +80,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     
-    strategy:
-      matrix:
-        test-suite: [kernel_tests, syscall_tests, stress_tests]
-    
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -93,6 +89,12 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y qemu-system-aarch64
         
+    - name: Download kernel binary
+      uses: actions/download-artifact@v3
+      with:
+        name: kernel-binary
+        path: target/${{ env.TARGET }}/debug/
+
     - name: Download test binaries
       uses: actions/download-artifact@v3
       with:
@@ -102,7 +104,29 @@ jobs:
     - name: Make binaries executable
       run: chmod +x target/${{ env.TARGET }}/debug/*
       
-    - name: Run ${{ matrix.test-suite }}
+    - name: Run kernel unit tests
+      run: |
+        timeout 180 qemu-system-aarch64 \
+          -machine virt \
+          -cpu cortex-a72 \
+          -smp 4 \
+          -m 2G \
+          -serial stdio \
+          -display none \
+          -kernel target/${{ env.TARGET }}/debug/kernel_tests
+    
+    - name: Run syscall integration tests
+      run: |
+        timeout 180 qemu-system-aarch64 \
+          -machine virt \
+          -cpu cortex-a72 \
+          -smp 4 \
+          -m 2G \
+          -serial stdio \
+          -display none \
+          -kernel target/${{ env.TARGET }}/debug/syscall_tests
+
+    - name: Run stress tests
       run: |
         timeout 300 qemu-system-aarch64 \
           -machine virt \
@@ -111,9 +135,21 @@ jobs:
           -m 2G \
           -serial stdio \
           -display none \
-          -kernel target/${{ env.TARGET }}/debug/${{ matrix.test-suite }} \
-          -semihosting-config enable=on,target=native \
-          || echo "Test completed"
+          -kernel target/${{ env.TARGET }}/debug/stress_tests
+
+    - name: Smoke test kernel boot
+      run: |
+        set -euo pipefail
+        timeout --preserve-status 60 qemu-system-aarch64 \
+          -machine virt \
+          -cpu cortex-a72 \
+          -smp 4 \
+          -m 2G \
+          -serial stdio \
+          -display none \
+          -kernel target/${{ env.TARGET }}/debug/kernel \
+          > boot.log || true
+        grep -q "Microkernel initialization complete" boot.log
 
   release:
     name: Build Release
@@ -144,7 +180,7 @@ jobs:
       with:
         name: release-kernel
         path: |
-          target/${{ env.TARGET }}/release/rustos
+          target/${{ env.TARGET }}/release/kernel
           target/${{ env.TARGET }}/release/image/kernel8.img
 
   performance:

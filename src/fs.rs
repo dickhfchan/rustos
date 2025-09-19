@@ -287,7 +287,7 @@ pub fn create_pipe_fds(pipe_id: u32) -> Result<(i32, i32), &'static str> {
 // Additional functions for coreutils support
 
 pub fn read_file(path: &str) -> Result<String, &'static str> {
-    let mut fs = FILE_SYSTEM.lock();
+    let fs = FILE_SYSTEM.lock();
     
     // Check if file exists
     if !fs.files.contains_key(path) {
@@ -349,7 +349,7 @@ pub fn get_current_directory() -> Result<String, &'static str> {
     Ok("/".to_string())
 }
 
-pub fn create_directory(path: &str) -> Result<(), &'static str> {
+pub fn create_directory(_path: &str) -> Result<(), &'static str> {
     // For now, just simulate directory creation
     // In a real filesystem, this would create directory metadata
     Ok(())
