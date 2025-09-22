@@ -181,6 +181,9 @@ jobs:
         targets: aarch64-unknown-none-softfloat
         components: rust-src, llvm-tools-preview
         
+    - name: Install required tools
+      run: make setup
+        
     - name: Build release kernel
       run: make release
       
