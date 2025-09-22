@@ -30,29 +30,32 @@ jobs:
         targets: aarch64-unknown-none-softfloat
         components: rust-src, llvm-tools-preview
         
-    - name: Install additional tools
-      run: |
-        cargo install cargo-binutils
-        sudo apt-get update
-        sudo apt-get install -y qemu-system-aarch64
-        
     - name: Cache cargo registry
       uses: actions/cache@v4
       with:
-        path: ~/.cargo/registry
-        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-        
-    - name: Cache cargo index
-      uses: actions/cache@v4
-      with:
-        path: ~/.cargo/git
-        key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+        path: |
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-
+        save-always: true
         
     - name: Cache target directory
       uses: actions/cache@v4
       with:
         path: target
         key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-target-
+        save-always: true
+        
+    - name: Install additional tools
+      run: |
+        cargo install cargo-binutils
+        sudo apt-get update
+        sudo apt-get install -y qemu-system-aarch64
         
     - name: Build kernel
       run: make kernel
