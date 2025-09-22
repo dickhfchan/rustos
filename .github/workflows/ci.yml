@@ -40,7 +40,6 @@ jobs:
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
         restore-keys: |
           ${{ runner.os }}-cargo-
-        save-always: true
         
     - name: Cache target directory
       uses: actions/cache@v4
@@ -49,7 +48,6 @@ jobs:
         key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
         restore-keys: |
           ${{ runner.os }}-target-
-        save-always: true
         
     - name: Install additional tools
       run: |
