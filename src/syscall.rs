@@ -147,7 +147,7 @@ fn sys_dup2(oldfd: i32, newfd: i32) -> u64 {
 }
 
 // Memory management system calls
-fn sys_mmap(addr: u64, length: usize, prot: i32, flags: i32, fd: i32, offset: i64) -> u64 {
+fn sys_mmap(_addr: u64, length: usize, _prot: i32, _flags: i32, _fd: i32, _offset: i64) -> u64 {
     // Simple memory mapping implementation
     // In a real kernel, this would handle virtual memory mapping
     match crate::memory::allocate_pages(length) {
