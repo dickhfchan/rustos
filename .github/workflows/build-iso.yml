@@ -48,8 +48,8 @@ jobs:
     - name: Build RustOS kernel
       run: make release
       
-    - name: Create ISO image
-      run: make iso
+    - name: Create large ISO image  
+      run: make iso-large
       
     - name: Basic ISO verification
       run: |
@@ -76,7 +76,11 @@ jobs:
     - name: Get ISO filename
       id: iso-file
       run: |
-        ISO_FILE=$(find . -name "rustos-*.iso" -type f -printf '%f\n' | head -1)
+        # Prefer large ISO if available, fall back to any ISO
+        ISO_FILE=$(find . -name "rustos-large-*.iso" -type f -printf '%f\n' | head -1)
+        if [ -z "$ISO_FILE" ]; then
+          ISO_FILE=$(find . -name "rustos-*.iso" -type f -printf '%f\n' | head -1)
+        fi
         echo "filename=$ISO_FILE" >> $GITHUB_OUTPUT
         echo "filepath=./$ISO_FILE" >> $GITHUB_OUTPUT
         

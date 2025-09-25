@@ -111,7 +111,7 @@ ISO_DIR = iso
 ISO_OUTPUT = rustos-$(TARGET)-$(shell date +%Y%m%d).iso
 ISO_TEMP_DIR = $(BUILD_DIR)/iso_temp
 
-# Create installable ISO image
+# Create installable ISO image (lightweight)
 .PHONY: iso
 iso: release
 	@echo "Creating installable RustOS ISO image..."
@@ -139,10 +139,10 @@ iso: release
 	@chmod +x $(ISO_TEMP_DIR)/install.sh
 	
 	@echo "Creating version info..."
-	@printf "RustOS ARM64 Microkernel\\nVersion: 0.1.0\\nBuild: $(shell date '+%Y-%m-%d %H:%M:%S')\\nTarget: $(TARGET)\\n" > $(ISO_TEMP_DIR)/VERSION
+	@printf "RustOS ARM64 Microkernel\\nVersion: 0.1.0\\nBuild: $(shell date '+%Y-%m-%d %H:%M:%S')\\nTarget: $(TARGET)\\nType: Lightweight ISO\\n" > $(ISO_TEMP_DIR)/VERSION
 	
 	@echo "Creating README for ISO..."
-	@printf "RustOS ARM64 Installable ISO\\n\\nThis ISO contains:\\n- RustOS ARM64 kernel\\n- GRUB bootloader for ARM64\\n- Installation script\\n\\nTo install:\\n1. Boot from this ISO\\n2. Run: sudo ./install.sh\\n\\nTo test in QEMU:\\nmake run-iso\\n" > $(ISO_TEMP_DIR)/README.txt
+	@printf "RustOS ARM64 Installable ISO (Lightweight)\\n\\nThis ISO contains:\\n- RustOS ARM64 kernel\\n- GRUB bootloader for ARM64\\n- Installation script\\n\\nSize: ~500KB\\n\\nTo install:\\n1. Boot from this ISO\\n2. Run: sudo ./install.sh\\n\\nTo test in QEMU:\\nmake run-iso\\n" > $(ISO_TEMP_DIR)/README.txt
 	
 	@echo "Generating ISO image with xorriso..."
 	@xorriso -as mkisofs \
@@ -157,18 +157,52 @@ iso: release
 	@echo "Cleaning up temporary files..."
 	@rm -rf $(ISO_TEMP_DIR)
 
+# Create comprehensive 1GB+ ISO image with full distribution
+.PHONY: iso-large
+iso-large: release
+	@echo "Creating large RustOS ISO (1GB+) with full distribution..."
+	@./create-large-iso.sh
+
+# Create full ISO image with complete filesystem
+.PHONY: iso-full  
+iso-full: release
+	@echo "Creating full RustOS ISO with complete filesystem..."
+	@./create-full-iso.sh
+
 # Run the ISO in QEMU (for testing)
 .PHONY: run-iso
 run-iso: iso
 	@echo "Testing RustOS ISO in QEMU..."
 	$(QEMU) $(QEMU_FLAGS) -cdrom $(ISO_OUTPUT)
 
+# Run the large ISO in QEMU (for testing)
+.PHONY: run-iso-large
+run-iso-large: iso-large
+	@echo "Testing RustOS large ISO in QEMU..."
+	@LARGE_ISO=$$(find . -name "rustos-large-*.iso" -type f | head -1); \
+	if [ -n "$$LARGE_ISO" ]; then \
+		$(QEMU) $(QEMU_FLAGS) -cdrom "$$LARGE_ISO"; \
+	else \
+		echo "Error: No large ISO found. Run 'make iso-large' first."; \
+	fi
+
+# Run the full ISO in QEMU (for testing)
+.PHONY: run-iso-full
+run-iso-full: iso-full
+	@echo "Testing RustOS full ISO in QEMU..."
+	@FULL_ISO=$$(find . -name "rustos-full-*.iso" -type f | head -1); \
+	if [ -n "$$FULL_ISO" ]; then \
+		$(QEMU) $(QEMU_FLAGS) -cdrom "$$FULL_ISO"; \
+	else \
+		echo "Error: No full ISO found. Run 'make iso-full' first."; \
+	fi
+
 # Clean ISO artifacts
 .PHONY: clean-iso
 clean-iso:
 	@echo "Cleaning ISO artifacts..."
 	@rm -f rustos-*.iso
-	@rm -rf $(ISO_TEMP_DIR)
+	@rm -rf $(ISO_TEMP_DIR) full_iso large_iso
 
 # Create a bootable image (for real hardware)
 .PHONY: image
@@ -340,9 +374,13 @@ help:
 	@echo "  doc           - Build and open documentation"
 	@echo "  setup         - Install required tools"
 	@echo "  image         - Create bootable image for real hardware"
-	@echo "  iso           - Create installable ISO image"
-	@echo "  run-iso       - Test ISO in QEMU"
-	@echo "  clean-iso     - Clean ISO artifacts"
+	@echo "  iso           - Create lightweight installable ISO (~500KB)"
+	@echo "  iso-full      - Create full ISO with complete filesystem (~3MB)"
+	@echo "  iso-large     - Create large ISO with full distribution (1GB+)"
+	@echo "  run-iso       - Test lightweight ISO in QEMU"
+	@echo "  run-iso-full  - Test full ISO in QEMU"
+	@echo "  run-iso-large - Test large ISO in QEMU"
+	@echo "  clean-iso     - Clean all ISO artifacts"
 	@echo "  coreutils     - Build uutils/coreutils for ARM64"
 	@echo "  cosmic-desktop - Build COSMIC desktop environment"
 	@echo "  desktop       - Build RustOS with COSMIC desktop"
