@@ -106,6 +106,83 @@ setup:
 	rustup component add llvm-tools-preview
 	cargo install cargo-binutils
 
+# ISO generation configuration
+ISO_DIR = iso
+ISO_OUTPUT = rustos-$(TARGET)-$(shell date +%Y%m%d).iso
+ISO_TEMP_DIR = $(BUILD_DIR)/iso_temp
+
+# Create installable ISO image
+.PHONY: iso
+iso: release
+	@echo "Creating installable RustOS ISO image..."
+	@mkdir -p $(ISO_TEMP_DIR)
+	@rm -rf $(ISO_TEMP_DIR)/*
+	
+	@echo "Setting up ISO filesystem structure..."
+	@mkdir -p $(ISO_TEMP_DIR)/boot/grub
+	@mkdir -p $(ISO_TEMP_DIR)/boot/efi
+	@mkdir -p $(ISO_TEMP_DIR)/EFI/BOOT
+	
+	@echo "Copying kernel to ISO..."
+	@if [ -z "$(OBJCOPY)" ]; then \
+		echo "Error: objcopy tool not found. Run 'make setup' to install rust-objcopy."; \
+		exit 1; \
+	fi
+	$(OBJCOPY) --strip-all -O binary target/$(TARGET)/release/$(KERNEL_NAME) $(ISO_TEMP_DIR)/boot/kernel.bin
+	
+	@echo "Copying bootloader configuration..."
+	@cp $(ISO_DIR)/boot/grub/grub.cfg $(ISO_TEMP_DIR)/boot/grub/
+	@cp $(ISO_DIR)/EFI/BOOT/grub.cfg $(ISO_TEMP_DIR)/EFI/BOOT/
+	
+	@echo "Copying installer and utilities..."
+	@cp $(ISO_DIR)/install.sh $(ISO_TEMP_DIR)/
+	@chmod +x $(ISO_TEMP_DIR)/install.sh
+	
+	@echo "Creating version info..."
+	@printf "RustOS ARM64 Microkernel\\nVersion: 0.1.0\\nBuild: $(shell date '+%Y-%m-%d %H:%M:%S')\\nTarget: $(TARGET)\\n" > $(ISO_TEMP_DIR)/VERSION
+	
+	@echo "Creating README for ISO..."
+	@printf "RustOS ARM64 Installable ISO\\n\\nThis ISO contains:\\n- RustOS ARM64 kernel\\n- GRUB bootloader for ARM64\\n- Installation script\\n\\nTo install:\\n1. Boot from this ISO\\n2. Run: sudo ./install.sh\\n\\nTo test in QEMU:\\nmake run-iso\\n" > $(ISO_TEMP_DIR)/README.txt
+	
+	@echo "Generating ISO image with xorriso..."
+	@xorriso -as mkisofs \
+		-r -J -joliet-long \
+		-V "RUSTOS_ARM64" \
+		-o $(ISO_OUTPUT) \
+		-partition_offset 16 \
+		-append_partition 2 0xef $(ISO_TEMP_DIR)/boot/efi \
+		-appended_part_as_gpt \
+		-iso_mbr_part_type 0x00 \
+		-c /boot.catalog \
+		-b /boot/grub/i386-pc/eltorito.img \
+		-no-emul-boot -boot-load-size 4 -boot-info-table --grub2-boot-info \
+		--grub2-mbr /usr/lib/grub/i386-pc/boot_hybrid.img \
+		$(ISO_TEMP_DIR) 2>/dev/null || \
+	xorriso -as mkisofs \
+		-r -J -joliet-long \
+		-V "RUSTOS_ARM64" \
+		-o $(ISO_OUTPUT) \
+		$(ISO_TEMP_DIR)
+	
+	@echo "ISO image created: $(ISO_OUTPUT)"
+	@echo "Size: $$(du -h $(ISO_OUTPUT) | cut -f1)"
+	
+	@echo "Cleaning up temporary files..."
+	@rm -rf $(ISO_TEMP_DIR)
+
+# Run the ISO in QEMU (for testing)
+.PHONY: run-iso
+run-iso: iso
+	@echo "Testing RustOS ISO in QEMU..."
+	$(QEMU) $(QEMU_FLAGS) -cdrom $(ISO_OUTPUT)
+
+# Clean ISO artifacts
+.PHONY: clean-iso
+clean-iso:
+	@echo "Cleaning ISO artifacts..."
+	@rm -f rustos-*.iso
+	@rm -rf $(ISO_TEMP_DIR)
+
 # Create a bootable image (for real hardware)
 .PHONY: image
 
@@ -276,6 +353,9 @@ help:
 	@echo "  doc           - Build and open documentation"
 	@echo "  setup         - Install required tools"
 	@echo "  image         - Create bootable image for real hardware"
+	@echo "  iso           - Create installable ISO image"
+	@echo "  run-iso       - Test ISO in QEMU"
+	@echo "  clean-iso     - Clean ISO artifacts"
 	@echo "  coreutils     - Build uutils/coreutils for ARM64"
 	@echo "  cosmic-desktop - Build COSMIC desktop environment"
 	@echo "  desktop       - Build RustOS with COSMIC desktop"

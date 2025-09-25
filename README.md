@@ -2,6 +2,26 @@
 
 A minimal microkernel written in Rust for ARM64 architecture, designed to work with [uutils/coreutils](https://github.com/uutils/coreutils) to provide a complete operating system environment.
 
+## 📦 Quick Start / Download
+
+### Ready-to-Use ISO Images
+
+Download pre-built installable ISO images from the [Releases](../../releases) page:
+
+- **Latest Release**: [Download RustOS ISO](../../releases/latest)
+- **All Releases**: [Browse all versions](../../releases)
+
+### Installation
+1. Download the latest `rustos-*.iso` from releases
+2. Write to USB: `sudo dd if=rustos-*.iso of=/dev/sdX bs=4M status=progress`
+3. Boot from USB and run: `sudo ./install.sh`
+
+### Quick Test in QEMU
+```bash
+# Download ISO then test
+qemu-system-aarch64 -machine virt -cpu cortex-a72 -m 2G -cdrom rustos-*.iso
+```
+
 ## Features
 
 ### Microkernel Architecture
@@ -35,6 +55,22 @@ Build the kernel:
 make kernel           # Debug build
 make release         # Release build
 ```
+
+### Creating ISO Images
+
+Build your own installable ISO:
+```bash
+make iso             # Create installable ISO image
+make run-iso         # Test ISO in QEMU
+./test-iso.sh        # Verify ISO contents
+```
+
+The ISO includes:
+- RustOS ARM64 kernel
+- GRUB bootloader (BIOS + UEFI)
+- Automated installation script
+- COSMIC desktop environment
+- Documentation and version info
 
 ### Running in QEMU
 

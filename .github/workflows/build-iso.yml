@@ -1,0 +1,125 @@
+name: Build RustOS ISO
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-iso:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install system dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y xorriso mtools grub-efi-arm64-bin qemu-system-arm build-essential
+        
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        toolchain: nightly
+        targets: aarch64-unknown-none-softfloat
+        components: rust-src, llvm-tools-preview
+        
+    - name: Install cargo-binutils
+      run: cargo install cargo-binutils
+      
+    - name: Cache cargo dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-
+          
+    - name: Build RustOS kernel
+      run: make release
+      
+    - name: Create ISO image
+      run: make iso
+      
+    - name: Verify ISO
+      run: ./test-iso.sh
+      
+    - name: Get ISO filename
+      id: iso-file
+      run: |
+        ISO_FILE=$(find . -name "rustos-*.iso" -type f -printf '%f\n' | head -1)
+        echo "filename=$ISO_FILE" >> $GITHUB_OUTPUT
+        echo "filepath=./$ISO_FILE" >> $GITHUB_OUTPUT
+        
+    - name: Upload ISO as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: rustos-iso
+        path: ${{ steps.iso-file.outputs.filepath }}
+        retention-days: 30
+        
+    - name: Create Release (on tag)
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref_name }}
+        release_name: RustOS ${{ github.ref_name }}
+        body: |
+          # RustOS ARM64 Release ${{ github.ref_name }}
+          
+          ## 🚀 What's New
+          - ARM64 microkernel with COSMIC desktop integration
+          - Installable ISO image for real hardware and VMs
+          - GRUB bootloader with multiple boot options
+          - Automated installation script included
+          
+          ## 📦 Downloads
+          - **rustos-*.iso**: Installable ISO image for ARM64 systems
+          
+          ## 🖥️ System Requirements
+          - ARM64 (AArch64) processor
+          - 2 GB RAM minimum, 4 GB recommended
+          - 4 GB storage space minimum
+          - UEFI or Legacy BIOS support
+          
+          ## 🔧 Installation
+          1. Download the ISO image
+          2. Write to USB: `dd if=rustos-*.iso of=/dev/sdX bs=4M status=progress`
+          3. Boot from USB and run: `sudo ./install.sh`
+          
+          ## 🧪 Testing
+          ```bash
+          # Test in QEMU
+          qemu-system-aarch64 -machine virt -cpu cortex-a72 -m 2G -cdrom rustos-*.iso
+          ```
+          
+          ## 📚 Documentation
+          - See `ISO-README.md` for detailed installation instructions
+          - Check `VERSION` file in ISO for build information
+          
+          Built from commit: ${{ github.sha }}
+        draft: false
+        prerelease: false
+        
+    - name: Upload Release Asset (on tag)
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create-release.outputs.upload_url }}
+        asset_path: ${{ steps.iso-file.outputs.filepath }}
+        asset_name: ${{ steps.iso-file.outputs.filename }}
+        asset_content_type: application/octet-stream
