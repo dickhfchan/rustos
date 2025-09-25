@@ -15,6 +15,10 @@ pub mod ipc;
 pub mod userspace;
 pub mod test_framework;
 pub mod panic;
+pub mod wayland;
+pub mod graphics;
+pub mod input;
+pub mod cosmic;
 
 // Re-export macros for tests (commented out to avoid redefinition)
 // pub use crate::{print, println, assert_eq_test, assert_test, assert_ne_test};

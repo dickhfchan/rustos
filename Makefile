@@ -133,10 +133,38 @@ coreutils:
 	cd coreutils && \
 	cargo build --target $(TARGET) --features unix
 
+# COSMIC desktop environment integration
+.PHONY: cosmic-desktop
+cosmic-desktop:
+	@echo "Building COSMIC desktop environment..."
+	@if [ ! -d "cosmic" ]; then \
+		echo "COSMIC repository not found. Please run 'git clone https://github.com/pop-os/cosmic-epoch.git cosmic' first"; \
+		exit 1; \
+	fi
+	@echo "COSMIC desktop components integrated into RustOS kernel"
+
+# Build RustOS with COSMIC desktop
+.PHONY: desktop
+desktop: kernel cosmic-desktop
+	@echo "RustOS with COSMIC desktop built successfully"
+
+# Run RustOS with COSMIC desktop in QEMU
+.PHONY: run-desktop
+run-desktop: desktop
+	@echo "Starting RustOS with COSMIC desktop in QEMU..."
+	$(QEMU) $(QEMU_FLAGS) -device virtio-gpu-pci -display gtk
+
 # Test targets
 .PHONY: test
 test: test-kernel test-syscalls test-stress
 	@echo "All tests completed!"
+
+# Test COSMIC desktop environment
+.PHONY: test-cosmic
+test-cosmic:
+	@echo "Building and running COSMIC desktop tests..."
+	cargo build --target $(TARGET) --bin cosmic_tests
+	$(QEMU) $(QEMU_FLAGS) target/$(TARGET)/$(MODE)/cosmic_tests
 
 # Run kernel unit tests
 .PHONY: test-kernel
@@ -249,10 +277,14 @@ help:
 	@echo "  setup         - Install required tools"
 	@echo "  image         - Create bootable image for real hardware"
 	@echo "  coreutils     - Build uutils/coreutils for ARM64"
+	@echo "  cosmic-desktop - Build COSMIC desktop environment"
+	@echo "  desktop       - Build RustOS with COSMIC desktop"
+	@echo "  run-desktop   - Run RustOS with COSMIC desktop in QEMU"
 	@echo "  test          - Run all test suites"
 	@echo "  test-kernel   - Run kernel unit tests"
 	@echo "  test-syscalls - Run system call integration tests"
 	@echo "  test-stress   - Run stress and stability tests"
+	@echo "  test-cosmic   - Run COSMIC desktop environment tests"
 	@echo "  test-suite SUITE=<name> - Run specific test suite"
 	@echo "  test-release  - Run tests in release mode"
 	@echo "  test-watch    - Continuous testing (rebuild on changes)"

@@ -15,6 +15,10 @@ mod fs;
 mod ipc;
 mod userspace;
 mod coreutils;
+mod wayland;
+mod graphics;
+mod input;
+mod cosmic;
 
 #[cfg(test)]
 mod test_framework;
@@ -56,8 +60,31 @@ pub extern "C" fn kernel_main() -> ! {
     coreutils::init();
     println!("Coreutils initialized");
     
+    // Initialize COSMIC desktop environment
+    if let Err(_) = cosmic::cosmic_init(1920, 1080) {
+        println!("Warning: COSMIC desktop initialization failed, continuing without window manager");
+    } else {
+        println!("COSMIC desktop environment initialized");
+        
+        // Create some demo windows
+        if let Ok(window1) = cosmic::cosmic_create_window("Terminal", 800, 600) {
+            println!("Created demo terminal window: {}", window1);
+        }
+        
+        if let Ok(window2) = cosmic::cosmic_create_window("File Manager", 600, 400) {
+            println!("Created demo file manager window: {}", window2);
+        }
+        
+        // Show a welcome notification
+        let _ = cosmic::cosmic_show_notification(
+            "Welcome to RustOS".into(),
+            "COSMIC desktop environment is now running!".into(),
+            cosmic::NotificationUrgency::Normal
+        );
+    }
+    
     println!("Microkernel initialization complete");
-    println!("Ready to load userspace applications");
+    println!("Ready to load userspace applications with window manager");
     
     // Demonstrate coreutils functionality
     println!("\n=== Coreutils Demo ===");
@@ -67,8 +94,14 @@ pub extern "C" fn kernel_main() -> ! {
     let _ = coreutils::execute_command("help", &[]);
     println!("=== Demo Complete ===\n");
     
-    // Main kernel loop
+    // Main kernel loop with COSMIC integration
     loop {
+        // Process COSMIC events if active
+        if cosmic::cosmic_is_session_active() {
+            let _ = cosmic::cosmic_process_events();
+            let _ = cosmic::cosmic_render_frame();
+        }
+        
         // Process scheduling and system calls
         process::schedule();
     }

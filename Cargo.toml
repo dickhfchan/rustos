@@ -9,6 +9,9 @@ linked_list_allocator = "0.10"
 bitflags = "2.4"
 volatile = "0.4"
 
+# Collections for no_std environment
+heapless = "0.8"
+
 [dependencies.lazy_static]
 version = "1.4"
 features = ["spin_no_std"]
@@ -32,6 +35,10 @@ path = "src/bin/syscall_tests.rs"
 [[bin]]
 name = "stress_tests"
 path = "src/bin/stress_tests.rs"
+
+[[bin]]
+name = "cosmic_tests"
+path = "src/bin/cosmic_tests.rs"
 
 
 [profile.dev]
