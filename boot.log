@@ -1,0 +1,41 @@
+RustOS ARM64 Microkernel v0.1.0
+Memory management initialized
+UART initialized
+Process management initialized
+System call interface initialized
+File system abstraction initialized
+IPC mechanisms initialized
+Userspace integration initialized
+Coreutils initialized - 12 commands available
+Coreutils initialized
+Microkernel initialization complete
+Ready to load userspace applications
+
+=== Coreutils Demo ===
+Hello from RustOS!
+/
+.
+..
+bin
+etc
+home
+tmp
+usr
+var
+RustOS Coreutils - Available commands:
+  cat     - Display file contents
+  ls      - List directory contents
+  echo    - Display text
+  pwd     - Show current directory
+  mkdir   - Create directories
+  touch   - Create files
+  rm      - Remove files/directories
+  cp      - Copy files
+  mv      - Move/rename files
+  wc      - Word count
+  head    - Show first lines of file
+  tail    - Show last lines of file
+  help    - Show this help
+=== Demo Complete ===
+
+qemu-system-aarch64: terminating on signal 15 from pid 36768 (timeout)

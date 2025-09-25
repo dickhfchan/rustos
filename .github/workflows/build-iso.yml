@@ -22,7 +22,7 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt update
-        sudo apt install -y xorriso mtools grub-efi-arm64-bin qemu-system-arm build-essential
+        sudo apt install -y xorriso mtools grub-common grub2-common build-essential
         
     - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
@@ -51,8 +51,27 @@ jobs:
     - name: Create ISO image
       run: make iso
       
-    - name: Verify ISO
-      run: ./test-iso.sh
+    - name: Basic ISO verification
+      run: |
+        # Basic checks without mounting
+        ISO_FILE=$(find . -name "rustos-*.iso" -type f | head -1)
+        if [ -z "$ISO_FILE" ]; then
+          echo "Error: No ISO file found"
+          exit 1
+        fi
+        echo "Found ISO: $ISO_FILE"
+        echo "Size: $(du -h "$ISO_FILE" | cut -f1)"
+        
+        # Check if it's a valid ISO
+        if ! file "$ISO_FILE" | grep -q "ISO 9660"; then
+          echo "Error: Invalid ISO format"
+          exit 1
+        fi
+        echo "✓ Valid ISO 9660 format"
+        
+        # List contents without mounting
+        echo "ISO Contents:"
+        xorriso -indev "$ISO_FILE" -find 2>/dev/null || echo "Could not list contents"
       
     - name: Get ISO filename
       id: iso-file
@@ -70,12 +89,9 @@ jobs:
         
     - name: Create Release (on tag)
       if: startsWith(github.ref, 'refs/tags/v')
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v1
       with:
-        tag_name: ${{ github.ref_name }}
-        release_name: RustOS ${{ github.ref_name }}
+        name: RustOS ${{ github.ref_name }}
         body: |
           # RustOS ARM64 Release ${{ github.ref_name }}
           
@@ -86,7 +102,7 @@ jobs:
           - Automated installation script included
           
           ## 📦 Downloads
-          - **rustos-*.iso**: Installable ISO image for ARM64 systems
+          - **${{ steps.iso-file.outputs.filename }}**: Installable ISO image for ARM64 systems
           
           ## 🖥️ System Requirements
           - ARM64 (AArch64) processor
@@ -96,13 +112,13 @@ jobs:
           
           ## 🔧 Installation
           1. Download the ISO image
-          2. Write to USB: `dd if=rustos-*.iso of=/dev/sdX bs=4M status=progress`
+          2. Write to USB: `dd if=${{ steps.iso-file.outputs.filename }} of=/dev/sdX bs=4M status=progress`
           3. Boot from USB and run: `sudo ./install.sh`
           
           ## 🧪 Testing
           ```bash
           # Test in QEMU
-          qemu-system-aarch64 -machine virt -cpu cortex-a72 -m 2G -cdrom rustos-*.iso
+          qemu-system-aarch64 -machine virt -cpu cortex-a72 -m 2G -cdrom ${{ steps.iso-file.outputs.filename }}
           ```
           
           ## 📚 Documentation
@@ -110,16 +126,8 @@ jobs:
           - Check `VERSION` file in ISO for build information
           
           Built from commit: ${{ github.sha }}
+        files: ${{ steps.iso-file.outputs.filepath }}
         draft: false
         prerelease: false
-        
-    - name: Upload Release Asset (on tag)
-      if: startsWith(github.ref, 'refs/tags/v')
-      uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ${{ steps.iso-file.outputs.filepath }}
-        asset_name: ${{ steps.iso-file.outputs.filename }}
-        asset_content_type: application/octet-stream

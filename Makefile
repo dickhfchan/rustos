@@ -149,19 +149,6 @@ iso: release
 		-r -J -joliet-long \
 		-V "RUSTOS_ARM64" \
 		-o $(ISO_OUTPUT) \
-		-partition_offset 16 \
-		-append_partition 2 0xef $(ISO_TEMP_DIR)/boot/efi \
-		-appended_part_as_gpt \
-		-iso_mbr_part_type 0x00 \
-		-c /boot.catalog \
-		-b /boot/grub/i386-pc/eltorito.img \
-		-no-emul-boot -boot-load-size 4 -boot-info-table --grub2-boot-info \
-		--grub2-mbr /usr/lib/grub/i386-pc/boot_hybrid.img \
-		$(ISO_TEMP_DIR) 2>/dev/null || \
-	xorriso -as mkisofs \
-		-r -J -joliet-long \
-		-V "RUSTOS_ARM64" \
-		-o $(ISO_OUTPUT) \
 		$(ISO_TEMP_DIR)
 	
 	@echo "ISO image created: $(ISO_OUTPUT)"

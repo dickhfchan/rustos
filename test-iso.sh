@@ -38,8 +38,12 @@ TEMP_MOUNT=$(mktemp -d)
 echo
 echo "Mounting ISO for detailed inspection..."
 
-# Mount the ISO
-sudo mount -o loop "$ISO_FILE" "$TEMP_MOUNT"
+# Mount the ISO (try with sudo, fall back without if not available)
+if command -v sudo >/dev/null 2>&1; then
+    sudo mount -o loop "$ISO_FILE" "$TEMP_MOUNT" 2>/dev/null || mount -o loop "$ISO_FILE" "$TEMP_MOUNT"
+else
+    mount -o loop "$ISO_FILE" "$TEMP_MOUNT"
+fi
 
 # Check for required files
 echo
@@ -97,7 +101,11 @@ if [ -f "$TEMP_MOUNT/EFI/BOOT/grub.cfg" ]; then
 fi
 
 # Unmount
-sudo umount "$TEMP_MOUNT"
+if command -v sudo >/dev/null 2>&1; then
+    sudo umount "$TEMP_MOUNT" 2>/dev/null || umount "$TEMP_MOUNT"
+else
+    umount "$TEMP_MOUNT"
+fi
 rmdir "$TEMP_MOUNT"
 
 echo
